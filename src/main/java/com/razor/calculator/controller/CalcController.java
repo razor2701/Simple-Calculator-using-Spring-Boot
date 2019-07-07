@@ -27,61 +27,94 @@ public class CalcController {
 	{
 		String eq = cl.getLogEquation();
 		System.out.println(eq);
-		int index=0;
-		for(int  i=0; i<eq.length(); i++)
-		{
-			if(eq!=null)
-			{
-				if(eq.charAt(i)=='*' || eq.charAt(i)=='/' || eq.charAt(i)=='+' || eq.charAt(i)=='-')
-				{
-					index = i;
-				}
-			}
-		}
-		System.out.println(index);
-		if(index!=0)
-		{
-			String par1 = eq.substring(0,index);
-			String par2 = eq.substring(index+1, eq.length());
-			System.out.println(par1);
-			System.out.println(par2);
-			int para1 = Integer.parseInt(par1);
-			int para2 = Integer.parseInt(par2);
-			System.out.println(" "+para1+" "+para2);
-			int result = getResult(eq, para1, para2, index);
-			cl.setLogResult(Integer.toString(result));
-			cr.save(cl);
-			
-		}
+		double result = eval(eq);
+		cl.setLogResult(Double.toString(result));
+		cr.save(cl);
 		model.addAttribute("CalLogs", cl);
 		
 		return "getExp";
 	}
 
-	private int getResult(String eq, int para1, int para2, int index) {
-		
-		int result;
-		char operator = eq.charAt(index);
-		
-		switch(operator) {
-		case '*': result=para1*para2;
-				  return result;
-				  
-		case '/': result=(int)para1/para2;
-		  		  return result;
-		  		  
-		case '+': result=para1+para2;
-				  return result;
-				  
-		case '-': result=para1-para2;
-		          return result;
-		}
-			
-			
-		return 0;
-	}
+	 double eval(final String str) {
+	    return new Object() {
+	        int pos = -1, ch;
+
+	        void nextChar() {
+	            ch = (++pos < str.length()) ? str.charAt(pos) : -1;
+	        }
+
+	        boolean eat(int charToEat) {
+	            while (ch == ' ') nextChar();
+	            if (ch == charToEat) {
+	                nextChar();
+	                return true;
+	            }
+	            return false;
+	        }
+
+	        double parse() {
+	            nextChar();
+	            double x = parseExpression();
+	            if (pos < str.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+	            return x;
+	        }
+
+	        // Grammar:
+	        // expression = term | expression `+` term | expression `-` term
+	        // term = factor | term `*` factor | term `/` factor
+	        // factor = `+` factor | `-` factor | `(` expression `)`
+	        //        | number | functionName factor | factor `^` factor
+
+	        double parseExpression() {
+	            double x = parseTerm();
+	            for (;;) {
+	                if      (eat('+')) x += parseTerm(); // addition
+	                else if (eat('-')) x -= parseTerm(); // subtraction
+	                else return x;
+	            }
+	        }
+
+	        double parseTerm() {
+	            double x = parseFactor();
+	            for (;;) {
+	                if      (eat('*')) x *= parseFactor(); // multiplication
+	                else if (eat('/')) x /= parseFactor(); // division
+	                else return x;
+	            }
+	        }
+
+	        double parseFactor() {
+	            if (eat('+')) return parseFactor(); // unary plus
+	            if (eat('-')) return -parseFactor(); // unary minus
+
+	            double x;
+	            int startPos = this.pos;
+	            if (eat('(')) { // parentheses
+	                x = parseExpression();
+	                eat(')');
+	            } else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
+	                while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
+	                x = Double.parseDouble(str.substring(startPos, this.pos));
+	            } else if (ch >= 'a' && ch <= 'z') { // functions
+	                while (ch >= 'a' && ch <= 'z') nextChar();
+	                String func = str.substring(startPos, this.pos);
+	                x = parseFactor();
+	                if (func.equals("sqrt")) x = Math.sqrt(x);
+	                else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
+	                else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
+	                else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
+	                else throw new RuntimeException("Unknown function: " + func);
+	            } else {
+	                throw new RuntimeException("Unexpected: " + (char)ch);
+	            }
+
+	            if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
+
+	            return x;
+	        }
+	    }.parse();
 	
 	
-	
+	 }
 
 }
