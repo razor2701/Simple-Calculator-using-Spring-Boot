@@ -9,13 +9,12 @@ import com.razor.calculator.model.CalLogs;
 import com.razor.calculator.repository.CalcRepository;
 
 @Controller
-@RequestMapping(value="/")
 public class CalcController {
 	
 	@Autowired
 	CalcRepository cr;
 	
-	@RequestMapping(value="/input")
+	@RequestMapping(value="/")
 	public String getExpression(Model model)
 	{
 		model.addAttribute("CalLogs", new CalLogs());
