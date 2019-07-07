@@ -9,19 +9,20 @@ import com.razor.calculator.model.CalLogs;
 import com.razor.calculator.repository.CalcRepository;
 
 @Controller
+@RequestMapping(value="/calculator")
 public class CalcController {
 	
 	@Autowired
 	CalcRepository cr;
 	
-	@RequestMapping(value="/")
+	@RequestMapping(value="/input")
 	public String getExpression(Model model)
 	{
 		model.addAttribute("CalLogs", new CalLogs());
 		return "getExp";
 	}
 	
-	@RequestMapping(value="/sendData")
+	@RequestMapping(value="sendData")
 	public String Compute(Model model, CalLogs cl)
 	{
 		String eq = cl.getLogEquation();
