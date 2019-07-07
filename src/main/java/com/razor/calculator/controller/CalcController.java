@@ -9,7 +9,7 @@ import com.razor.calculator.model.CalLogs;
 import com.razor.calculator.repository.CalcRepository;
 
 @Controller
-@RequestMapping(value="/calculator")
+@RequestMapping(value="/")
 public class CalcController {
 	
 	@Autowired
