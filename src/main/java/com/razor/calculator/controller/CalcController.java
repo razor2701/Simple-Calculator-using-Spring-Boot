@@ -21,7 +21,7 @@ public class CalcController {
 		return "getExp";
 	}
 	
-	@RequestMapping(value="sendData")
+	@RequestMapping(value="/sendData")
 	public String Compute(Model model, CalLogs cl)
 	{
 		String eq = cl.getLogEquation();
